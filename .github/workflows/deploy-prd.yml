@@ -1,0 +1,74 @@
+name: Deploy PRD
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_message:
+        description: "Deployment note"
+        required: false
+        default: "Manual deployment"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: deploy-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy PRD
+    runs-on:
+      - self-hosted
+      - windows
+      - prod
+    environment: prd
+    env:
+      BUILD_DIR: dist
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Resolve build output directory
+        shell: powershell
+        run: |
+          if (Test-Path dist) {
+            "BUILD_DIR=dist" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
+          elseif (Test-Path build) {
+            "BUILD_DIR=build" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
+          else {
+            Write-Error "No build output found. Expected dist or build."
+            exit 1
+          }
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.BUILD_DIR }}
+
+      - name: Deploy to PRD
+        run: 'echo "Deploying to PRODUCTION: ${{ inputs.deploy_message }}"'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
