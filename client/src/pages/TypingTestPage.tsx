@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 
 import { ThemeToggle } from '@/components/theme-toggle'
 import { SentenceDisplay } from '@/components/typing/SentenceDisplay'
@@ -25,6 +26,8 @@ export function TypingTestPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const latestRequestRef = useRef(0)
+  const switchKey = `${mode}-${difficulty}`
 
   useEffect(() => {
     void loadPrompt(mode, difficulty)
@@ -43,9 +46,16 @@ export function TypingTestPage() {
   }, [isCompleted, isReady, startTime])
 
   async function loadPrompt(nextMode: TypingMode, nextDifficulty: DifficultyMode) {
+    const requestId = ++latestRequestRef.current
     setIsLoading(true)
+
     try {
       const newPrompt = await fetchPromptByMode(nextMode, nextDifficulty)
+
+      if (requestId !== latestRequestRef.current) {
+        return
+      }
+
       setPromptText(newPrompt)
       setTypedText('')
       setIsCompleted(false)
@@ -53,7 +63,9 @@ export function TypingTestPage() {
       setStartTime(null)
       setElapsedSeconds(0)
     } finally {
-      setIsLoading(false)
+      if (requestId === latestRequestRef.current) {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -97,18 +109,50 @@ export function TypingTestPage() {
     : 0
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col p-4 sm:p-6">
-      <div className="mb-6 flex items-center justify-end">
+    <motion.main
+      className="mx-auto flex min-h-screen w-full max-w-3xl flex-col p-4 sm:p-6"
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}
+    >
+      <motion.div
+        className="mb-6 flex items-center justify-end"
+        initial={{ opacity: 0, x: 14 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.35, delay: 0.08, ease: 'easeOut' }}
+      >
         <ThemeToggle />
-      </div>
+      </motion.div>
 
-      <div className="space-y-6 flex-1">
-        <div>
+      <motion.div
+        className="space-y-6 flex-1"
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.07, delayChildren: 0.05 },
+          },
+        }}
+      >
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 14 },
+            show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
+          }}
+        >
           <h2 className="text-2xl font-bold">Typing Speed Test</h2>
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Choose mode and difficulty, then type the prompt exactly as shown.</p>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-wrap gap-2">
+        <motion.div
+          className="flex flex-wrap gap-2"
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+          }}
+        >
           <Button
             size="sm"
             variant={mode === 'sentence' ? 'default' : 'outline'}
@@ -123,9 +167,15 @@ export function TypingTestPage() {
           >
             Paragraph Mode
           </Button>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-wrap justify-end gap-2">
+        <motion.div
+          className="flex flex-wrap justify-end gap-2"
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+          }}
+        >
           <Button
             size="sm"
             variant={difficulty === 'easy' ? 'default' : 'outline'}
@@ -147,54 +197,106 @@ export function TypingTestPage() {
           >
             Hard
           </Button>
-        </div>
+        </motion.div>
 
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading prompt...</p>
-          ) : (
-            <SentenceDisplay sentence={promptText} typedText={typedText} />
-          )}
-
-          <StatsRow wpm={wpm} accuracy={accuracy} time={elapsedSeconds} />
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground sm:text-xs">
-              <span>Progress</span>
-              <span>{completion.toFixed(0)}%</span>
-            </div>
-            <Progress value={completion} />
-          </div>
-
-          <Textarea
-            ref={textareaRef}
-            placeholder={isLoading ? 'Loading...' : 'Start typing here...'}
-            value={typedText}
-            onChange={(event) => handleTyping(event.target.value)}
-            disabled={isLoading || isCompleted}
-            className="h-32 min-h-32 resize-none overflow-y-auto text-sm transition-all"
-          />
-
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              className="w-fit"
-              onClick={() => void loadPrompt(mode, difficulty)}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={`display-${switchKey}`}
+              className="relative"
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              Restart Test
-            </Button>
-            {isCompleted && (
-              <Button className="w-fit" onClick={() => {
-                setTypedText('')
-                setIsCompleted(false)
-                setIsReady(false)
-                setStartTime(null)
-                setElapsedSeconds(0)
-              }}>
-                Try Again Same Sentence
-              </Button>
-            )}
+              <div
+                className={[
+                  'transition-opacity duration-300',
+                  isLoading ? 'opacity-60' : 'opacity-100',
+                ].join(' ')}
+              >
+                <SentenceDisplay sentence={promptText} typedText={typedText} />
+              </div>
+              <p
+                className={[
+                  'pointer-events-none absolute right-3 top-3 text-xs text-muted-foreground transition-opacity duration-300',
+                  isLoading ? 'opacity-100' : 'opacity-0',
+                ].join(' ')}
+                aria-live="polite"
+              >
+                Loading prompt...
+              </p>
+            </motion.div>
+          </AnimatePresence>
+
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' } },
+          }}
+        >
+          <StatsRow wpm={wpm} accuracy={accuracy} time={elapsedSeconds} />
+        </motion.div>
+
+        <motion.div
+          className="space-y-2"
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' } },
+          }}
+        >
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground sm:text-xs">
+            <span>Progress</span>
+            <span>{completion.toFixed(0)}%</span>
           </div>
-      </div>
-    </main>
+          <Progress value={completion} />
+        </motion.div>
+
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={`input-${switchKey}`}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+          >
+            <Textarea
+              ref={textareaRef}
+              placeholder={isLoading ? 'Loading...' : 'Start typing here...'}
+              value={typedText}
+              onChange={(event) => handleTyping(event.target.value)}
+              disabled={isLoading || isCompleted}
+              className="h-32 min-h-32 resize-none overflow-y-auto text-sm transition-all"
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        <motion.div
+          className="flex justify-end gap-3"
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+          }}
+        >
+          <Button
+            variant="outline"
+            className="w-fit"
+            onClick={() => void loadPrompt(mode, difficulty)}
+          >
+            Restart Test
+          </Button>
+          {isCompleted && (
+            <Button className="w-fit" onClick={() => {
+              setTypedText('')
+              setIsCompleted(false)
+              setIsReady(false)
+              setStartTime(null)
+              setElapsedSeconds(0)
+            }}>
+              Try Again Same Sentence
+            </Button>
+          )}
+        </motion.div>
+      </motion.div>
+    </motion.main>
   )
 }
