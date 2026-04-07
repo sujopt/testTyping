@@ -1,0 +1,26 @@
+# Workspace
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build and coverage outputs
+coverage/
+*.lcov
+
+# Keep dependency folders ignored at package level too
+**/node_modules/
+**/dist/
