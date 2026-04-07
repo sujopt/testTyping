@@ -40,7 +40,7 @@ jobs:
           fetch-depth: 1
 
       - name: Build and run core unit tests
-        shell: pwsh
+        shell: powershell
         run: |
           $env:REPO_ROOT = (Get-Location).Path
           . .\buildtools\scripts\pipelines\helpers.ps1
@@ -85,7 +85,7 @@ jobs:
           path: downloaded-artifacts
 
       - name: Repackage downloaded outputs
-        shell: pwsh
+        shell: powershell
         run: |
           if (-not (Test-Path downloaded-artifacts)) {
             throw "downloaded-artifacts folder not found"
