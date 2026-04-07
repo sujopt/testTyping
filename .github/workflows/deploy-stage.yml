@@ -27,6 +27,8 @@ jobs:
     environment: stage
     env:
       BUILD_DIR: dist
+      MSYS_NO_PATHCONV: '1'
+      MSYS2_ARG_CONV_EXCL: '*'
 
     steps:
       - name: Checkout repository
