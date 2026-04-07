@@ -20,15 +20,10 @@ concurrency:
 jobs:
   deploy:
     name: Deploy DEV
-    runs-on:
-      - self-hosted
-      - windows
-      - prod
+    runs-on: ubuntu-latest
     environment: dev
     env:
       BUILD_DIR: dist
-      MSYS_NO_PATHCONV: '1'
-      MSYS2_ARG_CONV_EXCL: '*'
 
     steps:
       - name: Checkout repository
@@ -47,18 +42,15 @@ jobs:
         run: npm run build
 
       - name: Resolve build output directory
-        shell: powershell
         run: |
-          if (Test-Path dist) {
-            "BUILD_DIR=dist" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          }
-          elseif (Test-Path build) {
-            "BUILD_DIR=build" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          }
-          else {
-            Write-Error "No build output found. Expected dist or build."
+          if [ -d dist ]; then
+            echo "BUILD_DIR=dist" >> "$GITHUB_ENV"
+          elif [ -d build ]; then
+            echo "BUILD_DIR=build" >> "$GITHUB_ENV"
+          else
+            echo "No build output found. Expected dist or build." >&2
             exit 1
-          }
+          fi
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
