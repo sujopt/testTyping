@@ -20,6 +20,14 @@ pnpm-debug.log*
 # Build and coverage outputs
 coverage/
 *.lcov
+.next/
+dist-ssr/
+*.local
+artifacts/
+core-test-results/
+coverage.zip
+test-results.zip
+next-env.d.ts
 
 # Keep dependency folders ignored at package level too
 **/node_modules/

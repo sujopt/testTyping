@@ -147,7 +147,7 @@ export function TypingTestPage() {
         </motion.div>
 
         <motion.div
-          className="flex flex-wrap gap-2"
+          className="flex flex-wrap gap-1.5"
           variants={{
             hidden: { opacity: 0, y: 10 },
             show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
@@ -155,6 +155,7 @@ export function TypingTestPage() {
         >
           <Button
             size="sm"
+            className="h-8 px-2.5 text-xs"
             variant={mode === 'sentence' ? 'default' : 'outline'}
             onClick={() => setMode('sentence')}
           >
@@ -162,6 +163,7 @@ export function TypingTestPage() {
           </Button>
           <Button
             size="sm"
+            className="h-8 px-2.5 text-xs"
             variant={mode === 'paragraph' ? 'default' : 'outline'}
             onClick={() => setMode('paragraph')}
           >
@@ -170,7 +172,7 @@ export function TypingTestPage() {
         </motion.div>
 
         <motion.div
-          className="flex flex-wrap justify-end gap-2"
+          className="flex flex-wrap justify-end gap-1.5"
           variants={{
             hidden: { opacity: 0, y: 10 },
             show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
@@ -178,6 +180,7 @@ export function TypingTestPage() {
         >
           <Button
             size="sm"
+            className="h-8 px-2.5 text-xs"
             variant={difficulty === 'easy' ? 'default' : 'outline'}
             onClick={() => setDifficulty('easy')}
           >
@@ -185,6 +188,7 @@ export function TypingTestPage() {
           </Button>
           <Button
             size="sm"
+            className="h-8 px-2.5 text-xs"
             variant={difficulty === 'medium' ? 'default' : 'outline'}
             onClick={() => setDifficulty('medium')}
           >
@@ -192,6 +196,7 @@ export function TypingTestPage() {
           </Button>
           <Button
             size="sm"
+            className="h-8 px-2.5 text-xs"
             variant={difficulty === 'hard' ? 'default' : 'outline'}
             onClick={() => setDifficulty('hard')}
           >
@@ -271,7 +276,7 @@ export function TypingTestPage() {
         </AnimatePresence>
 
         <motion.div
-          className="flex justify-end gap-3"
+          className="flex justify-end gap-2"
           variants={{
             hidden: { opacity: 0, y: 10 },
             show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
@@ -279,13 +284,13 @@ export function TypingTestPage() {
         >
           <Button
             variant="outline"
-            className="w-fit"
+            className="h-8 w-fit px-2.5 text-xs"
             onClick={() => void loadPrompt(mode, difficulty)}
           >
             Restart Test
           </Button>
           {isCompleted && (
-            <Button className="w-fit" onClick={() => {
+            <Button className="h-8 w-fit px-2.5 text-xs" onClick={() => {
               setTypedText('')
               setIsCompleted(false)
               setIsReady(false)

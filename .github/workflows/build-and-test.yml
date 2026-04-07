@@ -3,14 +3,6 @@ name: Build And Run Core Unit Tests
 on:
   workflow_dispatch:
     inputs:
-      run_server_tests:
-        description: Include server tests
-        required: true
-        default: "true"
-        type: choice
-        options:
-          - "true"
-          - "false"
       build_configuration:
         description: Build configuration
         required: true
@@ -28,7 +20,6 @@ jobs:
       - windows
       - prod
     env:
-      RUN_SERVER_TESTS: ${{ inputs.run_server_tests }}
       BUILD_CONFIGURATION: ${{ inputs.build_configuration }}
       GITHUB_RUN_ID: ${{ github.run_id }}
       GITHUB_COMMIT: ${{ github.sha }}
@@ -43,8 +34,6 @@ jobs:
         shell: powershell
         run: |
           $env:REPO_ROOT = (Get-Location).Path
-          . .\buildtools\scripts\pipelines\helpers.ps1
-          .\buildtools\scripts\pipelines\build-pipeline.ps1
           .\buildtools\scripts\pipelines\core-test-pipeline.ps1
 
       - name: Upload core test artifacts
@@ -56,49 +45,7 @@ jobs:
             coverage.zip
             test-results.zip
             core-test-results/**/*.xml
-            core-test-results/*.trx
             coverage/**/*.xml
+            coverage/**/*
             artifacts/tests/**/*
-          if-no-files-found: warn
-
-  collect-artifacts:
-    name: Download and Repackage Artifacts
-    needs: build-and-test
-    if: always()
-    runs-on:
-      - self-hosted
-      - windows
-      - prod
-    env:
-      BUILD_CONFIGURATION: ${{ inputs.build_configuration }}
-      GITHUB_RUN_ID: ${{ github.run_id }}
-      GITHUB_COMMIT: ${{ github.sha }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download core test artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: core-unit-artifacts
-          path: downloaded-artifacts
-
-      - name: Repackage downloaded outputs
-        shell: powershell
-        run: |
-          if (-not (Test-Path downloaded-artifacts)) {
-            throw "downloaded-artifacts folder not found"
-          }
-          $summary = "run-$env:GITHUB_RUN_ID-$env:BUILD_CONFIGURATION"
-          Compress-Archive -Path downloaded-artifacts\* -DestinationPath "final-artifacts-$summary.zip" -Force
-
-      - name: Upload final artifact bundle
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: final-core-unit-artifacts
-          path: |
-            downloaded-artifacts/**/*
-            final-artifacts-*.zip
           if-no-files-found: warn

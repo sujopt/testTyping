@@ -1,7 +1,26 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-. "$PSScriptRoot\helpers.ps1"
+function Write-PipelineLog {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Message
+  )
+
+  $stamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+  Write-Host "[$stamp] $Message"
+}
+
+function New-ArtifactFolder {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path
+  )
+
+  if (-not (Test-Path $Path)) {
+    New-Item -Path $Path -ItemType Directory -Force | Out-Null
+  }
+}
 
 if (-not $env:REPO_ROOT) {
     $env:REPO_ROOT = (Resolve-Path "$PSScriptRoot\..\..\..").Path
@@ -15,56 +34,48 @@ New-ArtifactFolder -Path $resultsRoot
 New-ArtifactFolder -Path $coverageRoot
 New-ArtifactFolder -Path $artifactsRoot
 
-Write-PipelineLog "Running client tests"
-$clientExit = 0
-Push-Location "$env:REPO_ROOT\client"
+Get-ChildItem -Path $resultsRoot -Force | Remove-Item -Recurse -Force
+Get-ChildItem -Path $coverageRoot -Force | Remove-Item -Recurse -Force
+Get-ChildItem -Path $artifactsRoot -Force | Remove-Item -Recurse -Force
+
+Write-PipelineLog "Installing dependencies and building app"
+$buildExit = 0
+Push-Location "$env:REPO_ROOT"
 try {
-    npm test
+  npm install
+  if ($LASTEXITCODE -ne 0) { $buildExit = $LASTEXITCODE }
+
+  if ($buildExit -eq 0) {
+    npm run build
+    if ($LASTEXITCODE -ne 0) { $buildExit = $LASTEXITCODE }
+  }
+}
+finally {
+  Pop-Location
+}
+
+Write-PipelineLog "Running tests"
+$clientExit = 0
+Push-Location "$env:REPO_ROOT"
+try {
+  if ($buildExit -eq 0) {
+    npx vitest run `
+      --reporter=default `
+      --reporter=junit `
+      --outputFile.junit="$resultsRoot\junit.xml" `
+      --coverage.enabled=true `
+      --coverage.provider=v8 `
+      --coverage.reporter=html `
+      --coverage.reporter=cobertura `
+      --coverage.reporter=text-summary `
+      --coverage.reportsDirectory="$coverageRoot"
+
     if ($LASTEXITCODE -ne 0) { $clientExit = $LASTEXITCODE }
+  }
 }
 finally {
     Pop-Location
 }
-
-$serverExit = 0
-if ($env:RUN_SERVER_TESTS -eq "true") {
-    Write-PipelineLog "Running server tests"
-    Push-Location "$env:REPO_ROOT\server"
-    try {
-        npm install
-        npm test
-        if ($LASTEXITCODE -ne 0) { $serverExit = $LASTEXITCODE }
-    }
-    finally {
-        Pop-Location
-    }
-}
-else {
-    Write-PipelineLog "Skipping server tests because RUN_SERVER_TESTS=$env:RUN_SERVER_TESTS"
-}
-
-# Minimal files to demonstrate trx/xml/coverage packaging in artifacts.
-@"
-<?xml version="1.0" encoding="utf-8"?>
-<TestRun id="$env:GITHUB_RUN_ID" name="core-tests" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
-  <ResultSummary outcome="Completed" />
-</TestRun>
-"@ | Set-Content -Path "$resultsRoot\core-results.trx" -Encoding UTF8
-
-@"
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="core-tests" tests="1" failures="0" errors="0" skipped="0" />
-"@ | Set-Content -Path "$resultsRoot\core-results.xml" -Encoding UTF8
-
-@"
-<?xml version="1.0" encoding="UTF-8"?>
-<coverage line-rate="1" branch-rate="1" version="1.0">
-  <sources>
-    <source>$env:REPO_ROOT</source>
-  </sources>
-  <packages />
-</coverage>
-"@ | Set-Content -Path "$coverageRoot\coverage.xml" -Encoding UTF8
 
 Copy-Item "$resultsRoot\*" "$artifactsRoot" -Force
 Copy-Item "$coverageRoot\*" "$artifactsRoot" -Force
@@ -74,6 +85,6 @@ Compress-Archive -Path "$resultsRoot\*" -DestinationPath "$env:REPO_ROOT\test-re
 
 Write-PipelineLog "Test and packaging pipeline completed"
 
-if ($clientExit -ne 0 -or $serverExit -ne 0) {
-    throw "One or more test commands failed. clientExit=$clientExit serverExit=$serverExit"
+if ($buildExit -ne 0 -or $clientExit -ne 0) {
+  throw "Pipeline failed. buildExit=$buildExit clientExit=$clientExit"
 }

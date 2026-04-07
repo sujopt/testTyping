@@ -8,7 +8,7 @@ React + TypeScript + Vite client for the typing test app.
 - Difficulty levels: easy, medium, hard
 - Live stats: WPM, accuracy, elapsed time, and progress
 - Light and dark theme toggle
-- Prompt fetching from backend API
+- Local prompt generation in the client
 
 ## Tech Stack
 
@@ -22,21 +22,9 @@ React + TypeScript + Vite client for the typing test app.
 - Node.js 18+
 - npm
 
-## Environment Variables
-
-Create a .env file in the client folder if you want a custom backend URL.
-
-- VITE_API_URL
-  - Default: http://localhost:4000
-  - Used by src/lib/api.ts for API requests
-
-Example:
-
-VITE_API_URL=http://localhost:4000
-
 ## Install
 
-Run in the client folder:
+Run in the repository root:
 
 npm install
 
@@ -53,16 +41,15 @@ npm install
 
 ## Run Locally
 
-1. Start the backend server first (see server README).
-2. In the client folder run npm run dev.
-3. Open the URL shown by Vite.
+1. In the repository root run npm run dev.
+2. Open the URL shown by Vite.
 
 ## Project Structure
 
 - src/pages/TypingTestPage.tsx
   - Main typing test page and state management
 - src/lib/api.ts
-  - API calls for sentence/paragraph prompts
+  - In-memory prompt generation for sentence/paragraph modes
 - src/lib/metrics.ts
   - WPM and accuracy calculations
 - src/components/typing/
@@ -70,6 +57,4 @@ npm install
 
 ## Notes
 
-- API calls expect the backend endpoints:
-  - GET /api/sentence?difficulty=easy|medium|hard
-  - GET /api/paragraph?difficulty=easy|medium|hard
+- Prompt content and difficulty handling are fully local in the frontend.
