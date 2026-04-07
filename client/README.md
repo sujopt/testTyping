@@ -1,73 +1,75 @@
-# React + TypeScript + Vite
+# Typing Test Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite client for the typing test app.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Sentence and paragraph typing modes
+- Difficulty levels: easy, medium, hard
+- Live stats: WPM, accuracy, elapsed time, and progress
+- Light and dark theme toggle
+- Prompt fetching from backend API
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS v4
 
-## Expanding the ESLint configuration
+## Prerequisites
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Node.js 18+
+- npm
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Environment Variables
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Create a .env file in the client folder if you want a custom backend URL.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- VITE_API_URL
+  - Default: http://localhost:4000
+  - Used by src/lib/api.ts for API requests
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Example:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+VITE_API_URL=http://localhost:4000
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Install
+
+Run in the client folder:
+
+npm install
+
+## Available Scripts
+
+- npm run dev
+  - Starts Vite development server
+- npm run build
+  - Type-checks and builds production assets
+- npm run preview
+  - Previews the production build locally
+- npm run lint
+  - Runs ESLint
+
+## Run Locally
+
+1. Start the backend server first (see server README).
+2. In the client folder run npm run dev.
+3. Open the URL shown by Vite.
+
+## Project Structure
+
+- src/pages/TypingTestPage.tsx
+  - Main typing test page and state management
+- src/lib/api.ts
+  - API calls for sentence/paragraph prompts
+- src/lib/metrics.ts
+  - WPM and accuracy calculations
+- src/components/typing/
+  - Prompt display and stat components
+
+## Notes
+
+- API calls expect the backend endpoints:
+  - GET /api/sentence?difficulty=easy|medium|hard
+  - GET /api/paragraph?difficulty=easy|medium|hard
