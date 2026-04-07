@@ -22,7 +22,11 @@ app.get('/api/health', (_request, response) => {
 app.use('/api/sentence', sentenceRoute)
 app.use('/api/paragraph', paragraphRoute)
 
-app.listen(port, () => {
-  // Keep startup log simple and useful in local and cloud logs.
-  console.log(`Server running on http://localhost:${port}`)
-})
+if (require.main === module) {
+  app.listen(port, () => {
+    // Keep startup log simple and useful in local and cloud logs.
+    console.log(`Server running on http://localhost:${port}`)
+  })
+}
+
+module.exports = app
