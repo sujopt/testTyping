@@ -40,6 +40,8 @@ jobs:
         run: npm ci
 
       - name: Build application
+        env:
+          VITE_BASE_PATH: /testTyping/
         run: npm run build
 
       - name: Resolve build output directory
