@@ -1,0 +1,49 @@
+name: PR Pre-checks
+
+on:
+  pull_request:
+    branches:
+      - staging
+      - main
+
+jobs:
+  validate-promotion-path:
+    name: Validate PR source and target
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce allowed promotion paths
+        run: |
+          echo "head=${{ github.head_ref }} base=${{ github.base_ref }}"
+
+          if [[ "${{ github.base_ref }}" == "staging" && "${{ github.head_ref }}" == "dev" ]]; then
+            echo "Allowed: dev -> staging"
+            exit 0
+          fi
+
+          if [[ "${{ github.base_ref }}" == "main" && "${{ github.head_ref }}" == "staging" ]]; then
+            echo "Allowed: staging -> main"
+            exit 0
+          fi
+
+          echo "Only dev -> staging and staging -> main PRs are allowed for these protected branches." >&2
+          exit 1
+
+  test:
+    name: Run test suite
+    needs: validate-promotion-path
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
