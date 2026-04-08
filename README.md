@@ -1,4 +1,4 @@
-# Typing Test Frontend
+# Typing Test Frontend - Update test
 
 React + TypeScript + Vite client for the typing test app.
 
