@@ -2,6 +2,11 @@ name: Deploy Production
 
 on:
   workflow_dispatch:
+    inputs:
+      reviewers:
+        description: Comma-separated GitHub usernames for approval (optional override)
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -11,11 +16,15 @@ jobs:
   approval:
     if: github.ref_name == 'main'
     runs-on: ubuntu-latest
+    environment:
+      name: production
+    env:
+      REVIEWERS: ${{ inputs.reviewers != '' && inputs.reviewers || vars.PROD_DEPLOY_REVIEWERS || secrets.PROD_DEPLOY_REVIEWERS }}
     steps:
       - name: Validate reviewer configuration
         run: |
-          if [ -z "${{ vars.PROD_DEPLOY_REVIEWERS }}" ]; then
-            echo "Repository variable PROD_DEPLOY_REVIEWERS is required (comma-separated GitHub usernames)." >&2
+          if [ -z "$REVIEWERS" ]; then
+            echo "Set one of: workflow input 'reviewers', variable PROD_DEPLOY_REVIEWERS, or secret PROD_DEPLOY_REVIEWERS." >&2
             exit 1
           fi
 
@@ -23,7 +32,7 @@ jobs:
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ github.token }}
-          approvers: ${{ vars.PROD_DEPLOY_REVIEWERS }}
+          approvers: ${{ env.REVIEWERS }}
           minimum-approvals: 1
           issue-title: "Production deployment approval required"
           issue-body: "Approve this request to continue production deployment for run ${{ github.run_id }}."
