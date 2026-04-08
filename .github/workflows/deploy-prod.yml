@@ -2,11 +2,6 @@ name: Deploy Production
 
 on:
   workflow_dispatch:
-    inputs:
-      reviewers:
-        description: Comma-separated GitHub usernames for approval (optional override)
-        required: false
-        default: ""
 
 permissions:
   contents: read
@@ -19,12 +14,12 @@ jobs:
     environment:
       name: production
     env:
-      REVIEWERS: ${{ inputs.reviewers != '' && inputs.reviewers || vars.PROD_DEPLOY_REVIEWERS || secrets.PROD_DEPLOY_REVIEWERS }}
+      REVIEWERS: ${{ vars.PROD_DEPLOY_REVIEWERS || secrets.PROD_DEPLOY_REVIEWERS }}
     steps:
       - name: Validate reviewer configuration
         run: |
           if [ -z "$REVIEWERS" ]; then
-            echo "Set one of: workflow input 'reviewers', variable PROD_DEPLOY_REVIEWERS, or secret PROD_DEPLOY_REVIEWERS." >&2
+            echo "Set variable PROD_DEPLOY_REVIEWERS or secret PROD_DEPLOY_REVIEWERS." >&2
             exit 1
           fi
 
