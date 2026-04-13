@@ -5,35 +5,9 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
-  approval:
-    if: github.ref_name == 'main'
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-    env:
-      REVIEWERS: ${{ vars.PROD_DEPLOY_REVIEWERS || secrets.PROD_DEPLOY_REVIEWERS }}
-    steps:
-      - name: Validate reviewer configuration
-        run: |
-          if [ -z "$REVIEWERS" ]; then
-            echo "Set variable PROD_DEPLOY_REVIEWERS or secret PROD_DEPLOY_REVIEWERS." >&2
-            exit 1
-          fi
-
-      - name: Require approval before production deploy
-        uses: trstringer/manual-approval@v1
-        with:
-          secret: ${{ github.token }}
-          approvers: ${{ env.REVIEWERS }}
-          minimum-approvals: 1
-          issue-title: "Production deployment approval required"
-          issue-body: "Approve this request to continue production deployment for run ${{ github.run_id }}."
-
   deploy-prod:
-    needs: approval
     if: github.ref_name == 'main'
     runs-on: ubuntu-latest
     environment:

@@ -30,7 +30,6 @@ jobs:
 
   test:
     name: Run test suite
-    needs: validate-promotion-path
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
